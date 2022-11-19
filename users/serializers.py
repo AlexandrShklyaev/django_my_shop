@@ -1,36 +1,5 @@
 from rest_framework import serializers
-
-from ads.models import Ad, Category
-from users.models import Location, User
-
-
-class AdsListModelSerializer(serializers.ModelSerializer):
-    category = serializers.SlugRelatedField(
-        required=False,
-        queryset=Category.objects.all(),
-        slug_field="name",
-    )
-    author = serializers.SlugRelatedField(
-        required=False,
-        queryset=User.objects.all(),
-        slug_field="username",
-    )
-
-    class Meta:
-        model = Ad
-        fields = "__all__"
-
-
-class CategoryModelSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Category
-        fields = "__all__"
-
-
-class LocationModelSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Location
-        fields = "__all__"
+from users.models import User, Location
 
 
 class UserModelSerializer(serializers.ModelSerializer):
@@ -55,10 +24,16 @@ class UserCreateModelSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
     def is_valid(self, *, raise_exception=False):
-        self._locs = self.initial_data.pop("locations")
-        return super().is_valid(raise_exception=raise_exception)
+        qd = self.initial_data.copy()
+        self._locs = qd.pop("locations")
+        self.initial_data =qd
+        result_valid = super().is_valid(raise_exception=raise_exception)
+        qd.update({"locations":self._locs})
+        self.initial_data = qd
+        return result_valid
 
     def create(self, validated_data):
+        validated_data.pop("locations")
         new_obj = User.objects.create(**validated_data)
         for loc in self._locs:
             location, _ = Location.objects.get_or_create(name=loc)
@@ -95,3 +70,8 @@ class UserDeleteModelSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["id"]
+
+class LocationModelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Location
+        fields = "__all__"

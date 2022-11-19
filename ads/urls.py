@@ -2,7 +2,7 @@ from django.urls import path
 
 from ads import views
 from ads.models import Category, Ad
-from users.models import Location
+
 
 urlpatterns = [
     path('', views.index_ads),

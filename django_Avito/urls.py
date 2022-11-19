@@ -19,7 +19,8 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import SimpleRouter
 
-from ads.views import csv_in_bd, LocationsViewSet
+from ads.views import csv_in_bd
+from users.views import LocationsViewSet
 
 router = SimpleRouter()
 router.register(r'location', LocationsViewSet)

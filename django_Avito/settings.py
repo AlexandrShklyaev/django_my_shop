@@ -111,7 +111,8 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
 
-LANGUAGE_CODE = "en-us"
+# LANGUAGE_CODE = "en-us"
+LANGUAGE_CODE = "ru"
 
 TIME_ZONE = "UTC"
 
@@ -139,4 +140,5 @@ TOTAL_ON_PAGE = 5
 REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS":"rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE":10,
+
 }

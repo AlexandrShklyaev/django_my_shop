@@ -1,19 +1,17 @@
 import json
 
-from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import CreateView, UpdateView, DeleteView
-from rest_framework import viewsets
+
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 
 from ads.models import Category, Ad
-from django_Avito import settings
 from django_Avito.utils import load_data_locations, load_data_users, load_data_cats, load_data_ads
-from users.models import User, Location
-from django_Avito.serializers import LocationModelSerializer, AdsListModelSerializer, CategoryModelSerializer
+from users.models import User
+from ads.serializers import AdsListModelSerializer, CategoryModelSerializer
 
 
 def index_ads(request):
@@ -148,7 +146,3 @@ class Ads_Image_View(UpdateView):  # работа с картинками
         dict_obj.pop('_state')
         return JsonResponse(dict_obj, status=200)
 
-
-class LocationsViewSet(viewsets.ModelViewSet):
-    queryset = Location.objects.all()
-    serializer_class = LocationModelSerializer
