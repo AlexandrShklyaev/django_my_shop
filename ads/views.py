@@ -1,20 +1,20 @@
 import json
-
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import CreateView, UpdateView, DeleteView
-
-from rest_framework.generics import ListAPIView, RetrieveAPIView
-
-from ads.models import Category, Ad
+from rest_framework.generics import ListAPIView, RetrieveAPIView, CreateAPIView, UpdateAPIView, DestroyAPIView
+from rest_framework.permissions import IsAuthenticated
+from ads.models import Category, Ad, Selection
+from ads.permissions import SelectionUpdatePermission, AdUpdatePermission
 from django_Avito.utils import load_data_locations, load_data_users, load_data_cats, load_data_ads
 from users.models import User
-from ads.serializers import AdsListModelSerializer, CategoryModelSerializer
+from ads.serializers import AdsListModelSerializer, CategoryModelSerializer, SelectionListSerializer, \
+    SelectionDetailSerializer, SelectionSerializer, AdDetailSerializer, AdSerializer
 
 
-def index_ads(request):
+def index_ads(request):  # для примера использовал функиональный подход
     return JsonResponse({"status": "ok"}, status=200)
 
 
@@ -53,33 +53,25 @@ class Ads_List_View(ListAPIView):
         return super().get(request, *args, **kwargs)
 
 
-class Cats_List_View(ListAPIView):
-    queryset = Category.objects.all()
-    serializer_class = CategoryModelSerializer
-
-
 class Ads_Detail_View(RetrieveAPIView):
     queryset = Ad.objects.all()
-    serializer_class = AdsListModelSerializer
+    serializer_class = AdDetailSerializer
+    permission_classes = [IsAuthenticated]
 
 
-class Cats_Detail_View(RetrieveAPIView):
-    queryset = Category.objects.all()
-    serializer_class = CategoryModelSerializer
+class Ads_Update_View(UpdateAPIView):
+    queryset = Ad.objects.all()
+    serializer_class = AdDetailSerializer
 
 
-@method_decorator(csrf_exempt, name='dispatch')
-class Ads_Create_View(CreateView):  # общий класс (кроме Ad) для создания записей (model задается в urls)
-    def post(self, request, *args, **kwargs):
-        add_data = json.loads(request.body)
-        new_obj = self.model.objects.create(**add_data)
-        dict_obj = vars(new_obj)
-        dict_obj.pop('_state')
-        return JsonResponse(dict_obj, status=200)
+class Ads_Delete_View(DestroyAPIView):
+    queryset = Ad.objects.all()
+    serializer_class = AdSerializer
+    permission_classes = [IsAuthenticated, AdUpdatePermission]
 
 
 @method_decorator(csrf_exempt, name='dispatch')
-class Ads_Ad_Create_View(CreateView):  # класс для создания Ad
+class Ads_Create_View(CreateView):
     model = Ad
     fields = ["name", "author", "price", "description", "is_published", "category"]
 
@@ -106,32 +98,8 @@ class Ads_Ad_Create_View(CreateView):  # класс для создания Ad
 
 
 @method_decorator(csrf_exempt, name='dispatch')
-class Ads_Update_View(UpdateView):  # общий класс для изменения (model задается в urls)
-    def patch(self, request, *args, **kwargs):
-        apd_data = json.loads(request.body)
-        self.model.objects.filter(id=kwargs["pk"]).update(**apd_data)
-
-        new_obj = self.get_object()
-        dict_obj = vars(new_obj)
-        try:
-            dict_obj["image"] = dict_obj["image"].url
-        except:
-            dict_obj["image"] = None
-        dict_obj.pop('_state')
-        return JsonResponse(dict_obj, status=200)
-
-
-@method_decorator(csrf_exempt, name='dispatch')
-class Ads_Delete_View(DeleteView):  # общий класс для удаления (model задается в urls)
-    success_url = "/"
-
-    def delete(self, request, *args, **kwargs):
-        super().delete(request, *args, **kwargs)
-        return JsonResponse({"status": "ok"}, status=200)
-
-
-@method_decorator(csrf_exempt, name='dispatch')
 class Ads_Image_View(UpdateView):  # работа с картинками
+    model = Ad
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
 
@@ -146,3 +114,78 @@ class Ads_Image_View(UpdateView):  # работа с картинками
         dict_obj.pop('_state')
         return JsonResponse(dict_obj, status=200)
 
+
+class Cats_List_View(ListAPIView):
+    queryset = Category.objects.all()
+    serializer_class = CategoryModelSerializer
+
+
+class Cats_Detail_View(RetrieveAPIView):
+    queryset = Category.objects.all()
+    serializer_class = CategoryModelSerializer
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class Cats_Update_View(UpdateView):
+    model = Category
+    fields = ["name"]
+
+    def patch(self, request, *args, **kwargs):
+        super().post(request, *args, **kwargs)
+        cat_data = json.loads(request.body)
+        self.object.name = cat_data["name"]
+        self.object.save()
+        return JsonResponse({
+            "id": self.object.id,
+            "name": self.object.name
+        })
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class Cats_Delete_View(DeleteView):
+    model = Category
+    success_url = "/"
+
+    def delete(self, request, *args, **kwargs):
+        super().delete(request, *args, **kwargs)
+
+        return JsonResponse({"status": "ok"}, status=200)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class Cats_Create_View(CreateView):
+    model = Category
+    def post(self, request, *args, **kwargs):
+        add_data = json.loads(request.body)
+        new_obj = self.model.objects.create(**add_data)
+        dict_obj = vars(new_obj)
+        dict_obj.pop('_state')
+        return JsonResponse(dict_obj, status=200)
+
+
+class Selection_List_View(ListAPIView):
+    queryset = Selection.objects.all()
+    serializer_class = SelectionListSerializer
+
+
+class Selection_Retrieve_View(RetrieveAPIView):
+    queryset = Selection.objects.all()
+    serializer_class = SelectionDetailSerializer
+
+
+class Selection_Create_View(CreateAPIView):
+    queryset = Selection.objects.all()
+    serializer_class = SelectionSerializer
+    permission_classes = [IsAuthenticated]
+
+
+class Selection_Update_View(UpdateAPIView):
+    queryset = Selection.objects.all()
+    serializer_class = SelectionSerializer
+    permission_classes = [IsAuthenticated, SelectionUpdatePermission]
+
+
+class Selection_Delete_View(DestroyAPIView):
+    queryset = Selection.objects.all()
+    serializer_class = SelectionSerializer
+    permission_classes = [IsAuthenticated, SelectionUpdatePermission]

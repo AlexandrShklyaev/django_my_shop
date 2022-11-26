@@ -33,8 +33,13 @@ class UserCreateModelSerializer(serializers.ModelSerializer):
         return result_valid
 
     def create(self, validated_data):
-        validated_data.pop("locations")
+        try:
+            validated_data.pop("locations")
+        except:
+            pass
         new_obj = User.objects.create(**validated_data)
+        new_obj.set_password(validated_data["password"])
+
         for loc in self._locs:
             location, _ = Location.objects.get_or_create(name=loc)
             new_obj.locations.add(location)
