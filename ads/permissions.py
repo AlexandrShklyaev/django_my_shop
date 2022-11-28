@@ -22,7 +22,7 @@ class AdUpdatePermission(permissions.BasePermission):
     message = 'Изменение объявлений других пользователей запрещено'
 
     def has_permission(self, request, view):
-        if request.user.role in [User.MEMBER, User.ADMIN]:
+        if request.user.role in [User.MODERATOR, User.ADMIN]:
             return True
 
         try:
