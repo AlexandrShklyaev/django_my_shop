@@ -1,5 +1,18 @@
+from datetime import date
 from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ValidationError
 from django.db import models
+from dateutil.relativedelta import relativedelta
+
+MIN_AGE = 9
+
+def check_min_date(value: date):
+    delta_years = relativedelta(date.today(), value).years
+    if delta_years < MIN_AGE:
+        raise ValidationError(
+            '%(value)s слишком маловат',
+            params={'value': value},
+        )
 
 
 class Location(models.Model):
@@ -25,15 +38,12 @@ class User(AbstractUser):
         (MODERATOR, "Модератор"),
         (ADMIN, "Админ"),
     ]
-            # закоментил, эти поля уже есть в AbstractUser
-    # first_name = models.CharField(max_length=50)
-    # last_name = models.CharField(max_length=50, null=True)
-    # username = models.CharField(max_length=50, unique=True)
-    # password = models.CharField(max_length=50)
+
     role = models.CharField(max_length=9, choices=ROLES, default="member")
     age = models.PositiveIntegerField(null=True)
     locations = models.ManyToManyField(Location)
-
+    birth_date = models.DateField(validators=[check_min_date], null=True)
+    email = models.EmailField(unique=True, null=True)
     class Meta:
         verbose_name = "Пользователь"
         verbose_name_plural = "Пользователи"

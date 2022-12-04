@@ -2,6 +2,11 @@ from rest_framework import serializers
 from users.models import User, Location
 
 
+class Check_Email:
+    def __call__(self, value):
+        if value.split('@')[1]=="rambler.ru":
+            raise serializers.ValidationError("Нельзя регистрироваться с почтой rambler")
+
 class UserModelSerializer(serializers.ModelSerializer):
     locations = serializers.SlugRelatedField(many=True, read_only=True, slug_field="name")
 
@@ -18,7 +23,7 @@ class UserCreateModelSerializer(serializers.ModelSerializer):
         queryset=Location.objects.all(),
         slug_field="name",
     )
-
+    email = serializers.EmailField(validators=[Check_Email()])
     class Meta:
         model = User
         fields = "__all__"
