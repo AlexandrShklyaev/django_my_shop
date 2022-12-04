@@ -4,7 +4,7 @@ from ads.models import Category, Ad
 
 
 urlpatterns = [
-    path('', views.index_ads),
+    # path('', views.index_ads),
 
     # списковые
     path('cat/', views.Cats_List_View.as_view()),
