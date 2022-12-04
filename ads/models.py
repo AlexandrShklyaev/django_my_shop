@@ -4,7 +4,7 @@ from users.models import User
 
 
 class Category(models.Model):
-    slag = models.CharField(max_length=10, validators=[MinLengthValidator(5)], unique=True)
+    slug = models.CharField(max_length=10, validators=[MinLengthValidator(5)], unique=True)
     name = models.CharField(max_length=20)
 
     class Meta:

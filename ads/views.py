@@ -1,6 +1,5 @@
 import json
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import CreateView, UpdateView, DeleteView
@@ -9,9 +8,8 @@ from rest_framework.permissions import IsAuthenticated
 from ads.models import Category, Ad, Selection
 from ads.permissions import SelectionUpdatePermission, AdUpdatePermission
 from django_Avito.utils import load_data_locations, load_data_users, load_data_cats, load_data_ads
-from users.models import User
 from ads.serializers import AdsListModelSerializer, CategoryModelSerializer, SelectionListSerializer, \
-    SelectionDetailSerializer, SelectionSerializer, AdDetailSerializer, AdSerializer
+    SelectionDetailSerializer, SelectionSerializer, AdDetailSerializer, AdSerializer, AdCreateSerializer
 
 
 def index_ads(request):  # для примера использовал функиональный подход
@@ -70,36 +68,15 @@ class Ads_Delete_View(DestroyAPIView):
     permission_classes = [IsAuthenticated, AdUpdatePermission]
 
 
-@method_decorator(csrf_exempt, name='dispatch')
-class Ads_Create_View(CreateView):
-    model = Ad
-    fields = ["name", "author", "price", "description", "is_published", "category"]
-
-    def post(self, request, *args, **kwargs):
-        add_data = json.loads(request.body)
-        author = get_object_or_404(User, add_data["author_id"])
-        category = get_object_or_404(Category, add_data["category_id"])
-
-        new_obj = Ad.objects.create(
-            name=add_data["name"],
-            author=author,
-            price=add_data["price"],
-            description=add_data["description"],
-            is_published=add_data["is_published"],
-            category=category,
-        )
-        dict_obj = vars(new_obj)
-        try:
-            dict_obj["image"] = dict_obj["image"].url
-        except:
-            dict_obj["image"] = None
-        dict_obj.pop('_state')
-        return JsonResponse(dict_obj, status=200)
+class Ads_Create_View(CreateAPIView):
+    queryset = Ad.objects.all()
+    serializer_class = AdCreateSerializer
 
 
 @method_decorator(csrf_exempt, name='dispatch')
 class Ads_Image_View(UpdateView):  # работа с картинками
     model = Ad
+
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
 
@@ -155,6 +132,7 @@ class Cats_Delete_View(DeleteView):
 @method_decorator(csrf_exempt, name='dispatch')
 class Cats_Create_View(CreateView):
     model = Category
+
     def post(self, request, *args, **kwargs):
         add_data = json.loads(request.body)
         new_obj = self.model.objects.create(**add_data)
