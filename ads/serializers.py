@@ -4,6 +4,11 @@ from ads.models import Ad, Category, Selection
 from users.models import User
 
 
+class Chek_IsPublished:
+    def __call__(self, value):
+        if value:
+            raise serializers.ValidationError("Новое объявление не может быть опубликовано при создании")
+
 class AdSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ad
@@ -11,6 +16,7 @@ class AdSerializer(serializers.ModelSerializer):
 
 
 class AdCreateSerializer(serializers.ModelSerializer):
+    is_published = serializers.BooleanField(validators=[Chek_IsPublished()])
     class Meta:
         model = Ad
         fields = '__all__'
